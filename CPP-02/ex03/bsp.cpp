@@ -13,8 +13,7 @@ bool bsp(Point const a, Point const b, Point const c, Point const point) {
     // Check if all signs are positive or all are negative
     bool all_positive = (d1 > 0) && (d2 > 0) && (d3 > 0);
     bool all_negative = (d1 < 0) && (d2 < 0) && (d3 < 0);
-
-    // Also check if exactly on edge (any area is zero)
+    //exactly on edge
     bool on_edge = (d1 == 0) || (d2 == 0) || (d3 == 0);
 
     return (all_positive || all_negative) && !on_edge;
