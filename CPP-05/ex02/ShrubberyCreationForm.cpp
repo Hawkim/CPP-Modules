@@ -10,7 +10,7 @@ void ShrubberyCreationForm::executeAction() const {
     std::ofstream out((target + "_shrubbery").c_str());
     if (out.is_open()) {
         out << "       _-_\n"
-            << "    /~~   ~~\\\n"
+            << "    /~~   ~~\\\n" 
             << " /~~         ~~\\\n"
             << "{               }\n"
             << " \\  _-     -_  /\n"
