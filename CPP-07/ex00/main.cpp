@@ -16,16 +16,8 @@ int main() {
     std::cout << "min(c, d) = " << ::min(c, d) << std::endl;
     std::cout << "max(c, d) = " << ::max(c, d) << std::endl;
 
-    // // Awesome class test
-    // Awesome awesomeA(2), awesomeB(4);
-    // ::swap(awesomeA, awesomeB);
-    // std::cout << "awesomeA = " << awesomeA << ", awesomeB = " << awesomeB << std::endl;
-    // std::cout << "min(awesomeA, awesomeB) = " << ::min(awesomeA, awesomeB) << std::endl;
-    // std::cout << "max(awesomeA, awesomeB) = " << ::max(awesomeA, awesomeB) << std::endl;
-
     return 0;
 }
-
 
 
 // class Awesome

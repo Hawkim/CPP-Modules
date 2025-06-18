@@ -5,23 +5,24 @@
 #include <iostream>
 
 template <typename T>
+
 class Array {
-private:
-    T* _array;
-    unsigned int _size;
+    private:
+        T* _array;
+        unsigned int _size;
 
-public:
-    // Default constructor (empty array)
-    Array() : _array(NULL), _size(0) {}
+    public:
+        // Default constructor (empty array)
+        Array() : _array(NULL), _size(0) {}
 
-    // Constructor with size
-    explicit Array(unsigned int n) : _array(new T[n]()), _size(n) {}
+        // Constructor with size
+        explicit Array(unsigned int n) : _array(new T[n]()), _size(n) {}
 
-    // Copy constructor
-    Array(const Array& other) : _array(new T[other._size]), _size(other._size) {
-        for (unsigned int i = 0; i < _size; ++i)
-            _array[i] = other._array[i];
-    }
+        // Copy constructor
+        Array(const Array& other) : _array(new T[other._size]), _size(other._size) {
+            for (unsigned int i = 0; i < _size; ++i)
+                _array[i] = other._array[i];
+        }
 
     // Destructor
     ~Array() {

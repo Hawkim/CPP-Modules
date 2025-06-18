@@ -53,6 +53,8 @@ int main() {
     identify(random1);
     identify(random2);
     identify(random3);
+    
+    std::cout << "\n" << std::endl;
 
     std::cout << "\nReference identification:" << std::endl;
     identify(*random1);
