@@ -10,7 +10,8 @@ int main() {
     std::cout << "\n=== TEST 1: Vector Basic Test ===\n";
     {
         std::vector<int> vec;
-        for (int i = 0; i < 10; ++i) vec.push_back(i * 2);
+        for (int i = 0; i < 10; ++i)
+        vec.push_back(i * 2);
         
         // Find existing value
         try {
@@ -71,7 +72,7 @@ int main() {
         std::vector<int> emptyVec;
         try {
             easyfind(emptyVec, 42);
-            std::cout << "Found 42 in empty vector (unexpected)\n";
+            std::cout << "Found 42 in empty vector (will not happen)\n";
         } catch (const std::exception& e) {
             std::cout << "Correctly failed to find in empty container: " << e.what() << "\n";
         }
