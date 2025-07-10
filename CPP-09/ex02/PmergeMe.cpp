@@ -1,6 +1,6 @@
 #include "PmergeMe.hpp"
 
-PmergeMe::PmergeMe(int argc, char** argv) : _vecComparisons(0)
+PmergeMe::PmergeMe(int argc, char** argv) : vecComparisons(0)
 {
 	if (argc < 2)
 		throw std::runtime_error("Usage: ./PmergeMe <numbers...>");
@@ -58,7 +58,7 @@ void PmergeMe::process()
 
 	std::cout << "Time to process " << _vec.size() << " elements with std::vector: "  << timeVec << " us\n";
 	std::cout << "Time to process " << _deq.size() << " elements with std::deque: "  << timeDeq << " us\n";
-	std::cout << "Vector comparisons: " << _vecComparisons << "\n";
+	std::cout << "Vector comparisons: " << vecComparisons << "\n";
 }
 
 int PmergeMe::jacobsthal(int n) const
@@ -124,7 +124,7 @@ size_t PmergeMe::binarySearch(const std::vector<int>& vec, int value, size_t lef
 	while (left <= right)
 	{
 		size_t mid = left + (right - left) / 2;
-		_vecComparisons++;
+		vecComparisons++;
 
 		if (vec[mid] < value)
 			left = mid + 1;
@@ -174,7 +174,7 @@ void PmergeMe::fordJohnsonSort(std::vector<int>& vec)
 	std::vector<std::pair<int, int> > pairs;
 	for (size_t i = 0; i < vec.size(); i += 2)
 	{
-		_vecComparisons++;
+		vecComparisons++;
 		if (vec[i] > vec[i+1])
 			pairs.push_back(std::make_pair(vec[i], vec[i+1]));
 		else

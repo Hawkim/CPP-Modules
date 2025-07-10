@@ -24,7 +24,7 @@ class PmergeMe
     private:
         std::vector<int> _vec;
         std::deque<int> _deq;
-        unsigned long _vecComparisons;
+        unsigned long vecComparisons;
 
         bool isPositiveInteger(const std::string& s) const;
         void printContainer(const std::vector<int>& vec) const;
