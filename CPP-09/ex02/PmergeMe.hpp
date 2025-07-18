@@ -16,8 +16,8 @@ public:
     void process();
 
 private:
-    std::vector<int> _vec;
-    std::deque<int> _deq;
+    std::vector<int> vec;
+    std::deque<int> deq;
     size_t vecComparisons;
     size_t deqComparisons;
 

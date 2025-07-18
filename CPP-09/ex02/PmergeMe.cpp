@@ -24,8 +24,8 @@ PmergeMe::PmergeMe(int argc, char** argv) : vecComparisons(0), deqComparisons(0)
         if (!seen.insert(n).second)
             throw std::runtime_error("Error: Duplicate number");
 
-        _vec.push_back(n);
-        _deq.push_back(n);
+        vec.push_back(n);
+        deq.push_back(n);
     }
 }
 
@@ -34,10 +34,10 @@ PmergeMe::~PmergeMe() {}
 void PmergeMe::process()
 {
     std::cout << "Before: ";
-    printContainer(_vec);
+    printContainer(vec);
 
-    std::vector<int> vecCopy(_vec);
-    std::deque<int> deqCopy(_deq);
+    std::vector<int> vecCopy(vec);
+    std::deque<int> deqCopy(deq);
 
     clock_t startVec = clock();
     fordJohnsonSort(vecCopy);
@@ -53,8 +53,8 @@ void PmergeMe::process()
     printContainer(vecCopy);
     printSortCheck(vecCopy);
 
-    std::cout << "Time to process " << _vec.size() << " elements with std::vector: "  << timeVec << " us\n";
-    std::cout << "Time to process " << _deq.size() << " elements with std::deque: "  << timeDeq << " us\n";
+    std::cout << "Time to process " << vec.size() << " elements with std::vector: "  << timeVec << " us\n";
+    std::cout << "Time to process " << deq.size() << " elements with std::deque: "  << timeDeq << " us\n";
     std::cout << "Vector comparisons: " << vecComparisons << "\n";
     std::cout << "Deque comparisons: " << deqComparisons << "\n";
 }
