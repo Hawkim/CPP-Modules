@@ -1,20 +1,17 @@
 #include "BitcoinExchange.hpp"
 #include <iostream>
 
-int main(int argc, char* argv[])
-{
-    if (argc != 2)
-    {
-        std::cerr << "Error: could not open file." << std::endl;
+int main(int argc, char** argv) {
+    if (argc != 2) {
+        std::cout << "Error: could not open file." << std::endl;
         return 1;
     }
 
-    try
-    {
-        BitcoinExchange btc("data.csv");
-        btc.processInputFile(argv[1]);
-    } catch (std::exception &e) {
-        std::cerr << e.what() << std::endl;
+    try {
+        BitcoinExchange exchange("data.csv");
+        exchange.processInputFile(argv[1]);
+    } catch (const std::exception& e) {
+        std::cout << e.what() << std::endl;
         return 1;
     }
 

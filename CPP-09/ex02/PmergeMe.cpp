@@ -56,10 +56,10 @@ void PmergeMe::process()
     std::cout << "Time to process " << deq.size() << " elements with std::deque: " << timeDeq << " us\n";
     std::cout << "Vector comparisons: " << vecComparisons << "\n";
     std::cout << "Deque comparisons: " << deqComparisons << "\n";
-
-    printSortCheck(vecCopy);
-    printSortCheck(deqCopy);
     
+    printSortCheck(deqCopy);
+    printSortCheck(vecCopy);
+
 }
 
 bool PmergeMe::isPositiveInteger(const std::string& s) const
@@ -159,8 +159,10 @@ size_t PmergeMe::binarySearch(const std::vector<int>& vec, int value, size_t lef
         else
             right = mid;
     }
-    if (left < vec.size() && vec[left] < value)
+    if (left < vec.size() && vec[left] < value){
+    ++vecComparisons;
         return left + 1;
+    }
     return left;
 }
 
@@ -175,8 +177,11 @@ size_t PmergeMe::binarySearch(const std::deque<int>& deq, int value, size_t left
         else
             right = mid;
     }
-    if (left < deq.size() && deq[left] < value)
+    if (left < deq.size() && deq[left] < value){
+      ++deqComparisons;
         return left + 1;
+    }
+      
     return left;
 }
 
@@ -354,6 +359,6 @@ void PmergeMe::fordJohnsonSort(std::deque<int>& deq)
         size_t pos = binarySearch(mainChain, odd, 0, mainChain.size() - 1);
         mainChain.insert(mainChain.begin() + pos, odd);
     }
-
+    
     deq = mainChain;
 }
