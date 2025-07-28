@@ -22,7 +22,8 @@ void BitcoinExchange::loadDatabase(const std::string& filename) {
     
     while (std::getline(file, line)) {
         size_t commaPos = line.find(',');
-        if (commaPos == std::string::npos) continue;
+        if (commaPos == std::string::npos) 
+        continue;
         
         std::string date = line.substr(0, commaPos);
         std::string rateStr = line.substr(commaPos + 1);
