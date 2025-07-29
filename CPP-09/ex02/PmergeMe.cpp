@@ -19,7 +19,7 @@ PmergeMe::PmergeMe(int argc, char** argv) : vecComparisons(0), deqComparisons(0)
         if (num <= 0 || num > INT_MAX)
             throw std::runtime_error("Error: Number out of range");
 
-        int n = static_cast<int>(num);
+        int n = num;
         for (size_t j = 0; j < seen.size(); ++j) {
             if (seen[j] == n)
                 throw std::runtime_error("Error: Duplicate number");
