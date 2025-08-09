@@ -3,54 +3,44 @@
 
 #include <vector>
 #include <deque>
-#include <string>
-#include <iostream>
-#include <stdexcept>
-#include <climits>
+#include <cstddef>
 
 class PmergeMe {
 public:
-    PmergeMe(int argc, char** argv);
+    PmergeMe();
     ~PmergeMe();
 
-    void process();
+    // Sort + count comparisons (incremented only on key comparisons)
+    void sort_vec (std::vector<int>& v, std::size_t& comps);
+    void sort_deque(std::deque<int>& d,  std::size_t& comps);
+
+    // Simple printers
+    void print_vector(const std::vector<int>& v) const;
+    void print_deque (const std::deque<int>& d) const;
 
 private:
-    std::vector<int> vec;
-    std::deque<int> deq;
-    size_t vecComparisons;
-    size_t deqComparisons;
+    // ---- Internal helpers (vector) ----
+    static void pairwise_swap_vec(std::vector<int>& v, std::size_t& comps);
+    static int  lower_bound_count_vec(const std::vector<int>& a, int key, int hi, std::size_t& comps);
+    static int  find_index_vec(const std::vector<int>& v, int value);
+    static int  find_paired_first_vec(const std::vector< std::pair<int,int> >& pairs, int first);
+    static int  find_paired_second_vec(const std::vector< std::pair<int,int> >& pairs, int second);
+    static std::vector<int> arrange_losers_vec(const std::vector< std::pair<int,int> >& main_pairs,
+                                               const std::vector<int>& winners,
+                                               int odd);
 
-    bool isPositiveInteger(const std::string& s) const;
-    void printContainer(const std::vector<int>& vec) const;
-    void printContainer(const std::deque<int>& deq) const;
+    // ---- Internal helpers (deque) ----
+    static void pairwise_swap_deq(std::deque<int>& d, std::size_t& comps);
+    static int  lower_bound_count_deq(const std::deque<int>& a, int key, int hi, std::size_t& comps);
+    static int  find_index_deq(const std::deque<int>& d, int value);
+    static int  find_paired_first_deq(const std::deque< std::pair<int,int> >& pairs, int first);
+    static int  find_paired_second_deq(const std::deque< std::pair<int,int> >& pairs, int second);
+    static std::deque<int> arrange_losers_deq(const std::deque< std::pair<int,int> >& main_pairs,
+                                              const std::deque<int>& winners,
+                                              int odd);
 
-    int jacobsthal(int n) const;
-    std::vector<int> generateJacobsthalSequence(int pendSize) const;
-    std::vector<size_t> generateInsertionOrder(int pendSize) const;
-
-    size_t binarySearch(const std::vector<int>& vec, int value, size_t left, size_t right);
-    size_t binarySearch(const std::deque<int>& deq, int value, size_t left, size_t right);
-
-    void fordJohnsonSort(std::vector<int>& vec);
-    void fordJohnsonSort(std::deque<int>& deq);
-
-
-template <typename Container>
-void printSortCheck(const Container& c) const
-{
-    for (size_t i = 1; i < c.size(); ++i)
-    {
-        if (c[i - 1] > c[i])
-        {
-            std::cout << "\033[1;31m✘ Not sorted\033[0m" << std::endl;
-            return;
-        }
-    }
-    std::cout << "\033[1;32m✔ Sorted\033[0m" << std::endl;
-}
-
-
+    // Jacobsthal-guided insertion order (no sets/finds; linear-time build)
+    static void build_jacobsthal_insertion_order(std::vector<int>& order, std::size_t n);
 };
 
-#endif
+#endif // PMERGEME_HPP
