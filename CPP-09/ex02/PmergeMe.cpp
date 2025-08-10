@@ -2,286 +2,370 @@
 
 #include <algorithm>
 #include <iostream>
+#include <iterator>
+#include <cstdio>
+#include <cstdlib>
 
-// =========================
-// Public API
-// =========================
-PmergeMe::PmergeMe() {}
-PmergeMe::~PmergeMe() {}
+// ===== Utilities used by the algorithm =====
 
-void PmergeMe::print_vector(const std::vector<int>& v) const {
-    for (std::size_t i = 0; i < v.size(); ++i) {
-        if (i) std::cout << " ";
-        std::cout << v[i];
+static int binary_Search(const std::vector<int>& main_chain, int elem, int high, int* comparisons) {
+    if (main_chain.empty())
+        return 0;
+    int low = 0;
+    if (high >= static_cast<int>(main_chain.size()))
+        high = static_cast<int>(main_chain.size()) - 1;
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        (*comparisons)++;
+        if (main_chain[mid] == elem) {
+            return mid;
+        } else if (main_chain[mid] > elem) {
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
     }
-    std::cout << std::endl;
+    return low;
 }
 
-void PmergeMe::print_deque(const std::deque<int>& d) const {
-    for (std::size_t i = 0; i < d.size(); ++i) {
-        if (i) std::cout << " ";
-        std::cout << d[i];
+static int binary_Search_deque(const std::deque<int>& main_chain, int elem, int high, int* comparisons) {
+    if (main_chain.empty())
+        return 0;
+    int low = 0;
+    if (high >= static_cast<int>(main_chain.size()))
+        high = static_cast<int>(main_chain.size()) - 1;
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        (*comparisons)++;
+        if (main_chain[mid] == elem)
+            return mid;
+        else if (main_chain[mid] > elem)
+            high = mid - 1;
+        else
+            low = mid + 1;
     }
-    std::cout << std::endl;
+    return low;
 }
 
-// =========================
-// Jacobsthal order (shared)
-// =========================
-static unsigned jac_next(unsigned a, unsigned b) { return a + 2u*b; } // J(n)=J(n-1)+2J(n-2)
-
-void PmergeMe::build_jacobsthal_insertion_order(std::vector<int>& order, std::size_t n) {
-    order.clear();
-    if (n == 0) return;
-    order.push_back(0);               // always insert pending[0] first
-    if (n == 1) return;
-
-    // Build Jacobsthal sequence: 0,1,1,3,5,11,... until >= n
-    std::vector<unsigned> J; J.reserve(32);
-    J.push_back(0u); J.push_back(1u);
-    while (J.back() < n) {
-        unsigned next = jac_next(J[J.size()-1], J[J.size()-2]);
-        J.push_back(next);
+static int jacobsthalSeqGen(int n) {
+    if (n == 0) return 0;
+    if (n == 1) return 1;
+    int prev2 = 0, prev1 = 1, curr = 0;
+    for (int i = 2; i <= n; i++) {
+        curr = prev1 + 2 * prev2;
+        prev2 = prev1;
+        prev1 = curr;
     }
+    return curr;
+}
 
-    // Push ranges (prev+1 .. cur-1) in DESC order, then fill remaining ASC
-    std::vector<char> seen(n, 0);
-    seen[0] = 1;
+static std::vector<int> JacobthalIndices(int size) {
+    std::vector<int> jacobSequence;
+    int jacobIndex = 3;
+    while (jacobsthalSeqGen(jacobIndex) <= size) {
+        jacobSequence.push_back(jacobsthalSeqGen(jacobIndex));
+        jacobIndex++;
+    }
+    return jacobSequence;
+}
 
-    unsigned prev = 1u;
-    for (std::size_t k = 2; k < J.size(); ++k) {
-        unsigned cur = J[k];
-        int start = (int)prev + 1;
-        int end   = (int)cur  - 1;
-        for (int i = end; i >= start; --i) {
-            if (i >= 0 && (std::size_t)i < n && !seen[i]) {
-                order.push_back(i);
-                seen[i] = 1;
+static std::deque<int> JacobthalIndicesDeq(int size) {
+    std::deque<int> jacobSequence;
+    int jacobIndex = 3;
+    while (jacobsthalSeqGen(jacobIndex) <= size) {
+        jacobSequence.push_back(jacobsthalSeqGen(jacobIndex));
+        jacobIndex++;
+    }
+    return jacobSequence;
+}
+
+static void edit(std::vector<int>& jacob, std::vector<int> pend) {
+    std::vector<int>::iterator it = jacob.begin();
+    std::vector<int> pushedNumbers;
+    std::vector<int> temp;
+    while (it != jacob.end()) {
+        int x;
+        if (*it >= 0) {
+            x = *it;
+            while (x > 1) {
+                if (std::find(pushedNumbers.begin(), pushedNumbers.end(), x) == pushedNumbers.end()) {
+                    temp.push_back(x - 1);
+                    pushedNumbers.push_back(x);
+                } else
+                    break;
+                x--;
             }
         }
-        prev = cur;
-        if (cur >= n) break;
+        ++it;
     }
-    for (std::size_t i = 0; i < n; ++i) {
-        if (!seen[i]) { order.push_back((int)i); seen[i] = 1; }
+    if (temp.size() == pend.size())
+        jacob = temp;
+    else {
+        int x = static_cast<int>(pend.size());
+        while (temp.size() < pend.size()) {
+            if (std::find(pushedNumbers.begin(), pushedNumbers.end(), x) == pushedNumbers.end()) {
+                temp.push_back(x - 1);
+                pushedNumbers.push_back(x);
+            } else
+                break;
+            x--;
+        }
+        jacob = temp;
     }
 }
 
-// =========================
-// Vector helpers
-// =========================
-void PmergeMe::pairwise_swap_vec(std::vector<int>& v, std::size_t& comps) {
-    for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
-        ++comps; // compare v[i] > v[i+1]
-        if (v[i] > v[i+1]) std::swap(v[i], v[i+1]);
+static void editDeq(std::deque<int>& jacob, std::deque<int> pend) {
+    std::deque<int>::iterator it = jacob.begin();
+    std::deque<int> pushedNumbers;
+    std::deque<int> temp;
+    while (it != jacob.end()) {
+        int x;
+        if (*it >= 0) {
+            x = *it;
+            while (x > 1) {
+                if (std::find(pushedNumbers.begin(), pushedNumbers.end(), x) == pushedNumbers.end()) {
+                    temp.push_back(x - 1);
+                    pushedNumbers.push_back(x);
+                } else
+                    break;
+                x--;
+            }
+        }
+        ++it;
+    }
+    if (temp.size() == pend.size())
+        jacob = temp;
+    else {
+        int x = static_cast<int>(pend.size());
+        while (temp.size() < pend.size()) {
+            if (std::find(pushedNumbers.begin(), pushedNumbers.end(), x) == pushedNumbers.end()) {
+                temp.push_back(x - 1);
+                pushedNumbers.push_back(x);
+            } else
+                break;
+            x--;
+        }
+        jacob = temp;
     }
 }
 
-int PmergeMe::lower_bound_count_vec(const std::vector<int>& a, int key, int hi, std::size_t& comps) {
-    if (a.empty()) return 0;
-    int lo = 0;
-    if (hi >= (int)a.size()) hi = (int)a.size() - 1;
-    while (lo <= hi) {
-        int mid = (lo + hi) / 2;
-        ++comps;                       // one key comparison per step
-        if (a[mid] < key) lo = mid + 1;
-        else               hi = mid - 1;
-    }
-    return lo; // insertion position
-}
-
-int PmergeMe::find_index_vec(const std::vector<int>& v, int value) {
-    for (std::size_t i = 0; i < v.size(); ++i) if (v[i] == value) return (int)i;
+static int get_idx(std::vector<int>& vec, int val) {
+    if (val == -1)
+        return static_cast<int>(vec.size());
+    std::vector<int>::iterator it = std::find(vec.begin(), vec.end(), val);
+    if (it != vec.end())
+        return static_cast<int>(std::distance(vec.begin(), it));
     return -1;
 }
 
-int PmergeMe::find_paired_first_vec(const std::vector< std::pair<int,int> >& pairs, int first) {
-    for (std::size_t i = 0; i < pairs.size(); ++i) if (pairs[i].first == first) return pairs[i].second;
+static int get_idx_deq(std::deque<int>& vec, int val) {
+    if (val == -1)
+        return static_cast<int>(vec.size());
+    std::deque<int>::iterator it = std::find(vec.begin(), vec.end(), val);
+    if (it != vec.end())
+        return static_cast<int>(std::distance(vec.begin(), it));
     return -1;
 }
 
-int PmergeMe::find_paired_second_vec(const std::vector< std::pair<int,int> >& pairs, int second) {
-    for (std::size_t i = 0; i < pairs.size(); ++i) if (pairs[i].second == second) return pairs[i].first;
-    return -1;
-}
-
-std::vector<int> PmergeMe::arrange_losers_vec(const std::vector< std::pair<int,int> >& main_pairs,
-                                              const std::vector<int>& winners,
-                                              int odd)
-{
-    std::vector<int> losers; losers.reserve(winners.size() + (odd!=-1));
-    for (std::size_t i = 0; i < winners.size(); ++i) {
-        int w = winners[i];
-        int l = find_paired_first_vec(main_pairs, w); // loser paired to this winner
-        if (l != -1) losers.push_back(l);
+static int findPairedValue(const std::vector<std::pair<int, int> >& vec, int target) {
+    for (std::vector<std::pair<int, int> >::const_iterator it = vec.begin(); it != vec.end(); ++it) {
+        if (it->second == target)
+            return it->first;
     }
-    if (odd != -1) losers.push_back(odd);
+    return -1;
+}
+
+static int findPairedValueDeq(const std::deque<std::pair<int, int> >& vec, int target) {
+    for (std::deque<std::pair<int, int> >::const_iterator it = vec.begin(); it != vec.end(); ++it) {
+        if (it->second == target)
+            return it->first;
+    }
+    return -1;
+}
+
+static int findPairedValueFirst(const std::vector<std::pair<int, int> >& vec, int target) {
+    for (std::vector<std::pair<int, int> >::const_iterator it = vec.begin(); it != vec.end(); ++it) {
+        if (it->first == target)
+            return it->second;
+    }
+    return -1;
+}
+
+static int findPairedValueFirstDeq(const std::deque<std::pair<int, int> >& vec, int target) {
+    for (std::deque<std::pair<int, int> >::const_iterator it = vec.begin(); it != vec.end(); ++it) {
+        if (it->first == target)
+            return it->second;
+    }
+    return -1;
+}
+
+static std::vector<int> arrangeLosers(std::vector<std::pair<int, int> > main_chain,
+                                      std::vector<int> losers,
+                                      std::vector<int> winners,
+                                      int odd) {
+    std::vector<int> temp;
+    for (std::vector<int>::iterator it = winners.begin(); it != winners.end(); ++it) {
+        int val = *it;
+        int x = findPairedValueFirst(main_chain, val);
+        temp.push_back(x);
+    }
+    if (odd != -1)
+        temp.push_back(odd);
+    losers.swap(temp);
     return losers;
 }
 
-// =========================
-// Deque helpers
-// =========================
-void PmergeMe::pairwise_swap_deq(std::deque<int>& d, std::size_t& comps) {
-    for (std::size_t i = 0; i + 1 < d.size(); i += 2) {
-        ++comps; // compare d[i] > d[i+1]
-        if (d[i] > d[i+1]) std::swap(d[i], d[i+1]);
+static std::deque<int> arrangeLosersDeq(std::deque<std::pair<int, int> > main_chain,
+                                        std::deque<int> losers,
+                                        std::deque<int> winners,
+                                        int odd) {
+    std::deque<int> temp;
+    for (std::deque<int>::iterator it = winners.begin(); it != winners.end(); ++it) {
+        int val = *it;
+        int x = findPairedValueFirstDeq(main_chain, val);
+        temp.push_back(x);
     }
-}
-
-int PmergeMe::lower_bound_count_deq(const std::deque<int>& a, int key, int hi, std::size_t& comps) {
-    if (a.empty()) return 0;
-    int lo = 0;
-    if (hi >= (int)a.size()) hi = (int)a.size() - 1;
-    while (lo <= hi) {
-        int mid = (lo + hi) / 2;
-        ++comps;                       // one key comparison per step
-        if (a[mid] < key) lo = mid + 1;
-        else               hi = mid - 1;
-    }
-    return lo; // insertion position
-}
-
-int PmergeMe::find_index_deq(const std::deque<int>& d, int value) {
-    for (std::size_t i = 0; i < d.size(); ++i) if (d[i] == value) return (int)i;
-    return -1;
-}
-
-int PmergeMe::find_paired_first_deq(const std::deque< std::pair<int,int> >& pairs, int first) {
-    for (std::size_t i = 0; i < pairs.size(); ++i) if (pairs[i].first == first) return pairs[i].second;
-    return -1;
-}
-
-int PmergeMe::find_paired_second_deq(const std::deque< std::pair<int,int> >& pairs, int second) {
-    for (std::size_t i = 0; i < pairs.size(); ++i) if (pairs[i].second == second) return pairs[i].first;
-    return -1;
-}
-
-std::deque<int> PmergeMe::arrange_losers_deq(const std::deque< std::pair<int,int> >& main_pairs,
-                                             const std::deque<int>& winners,
-                                             int odd)
-{
-    std::deque<int> losers;
-    for (std::size_t i = 0; i < winners.size(); ++i) {
-        int w = winners[i];
-        int l = find_paired_first_deq(main_pairs, w);
-        if (l != -1) losers.push_back(l);
-    }
-    if (odd != -1) losers.push_back(odd);
+    if (odd != -1)
+        temp.push_back(odd);
+    losers.swap(temp);
     return losers;
 }
 
-// =========================
-// Core algorithms
-// =========================
-void PmergeMe::sort_vec(std::vector<int>& v, std::size_t& comps) {
-    if (v.size() <= 1) return;
+// ===== PmergeMe methods =====
 
-    // 1) Order each adjacent pair and build (winner, loser)
-    pairwise_swap_vec(v, comps);
-    std::vector< std::pair<int,int> > pairs;
-    pairs.reserve(v.size()/2);
-    int odd = -1;
+PmergeMe::PmergeMe() {}
+PmergeMe::PmergeMe(const PmergeMe& other) { (void)other; }
+PmergeMe& PmergeMe::operator=(const PmergeMe& other) { if (this != &other) { (void)other; } return *this; }
+PmergeMe::~PmergeMe() {}
 
-    for (std::size_t i = 0; i < v.size(); i += 2) {
-        if (i + 1 < v.size()) {
-            pairs.push_back(std::make_pair(v[i+1], v[i])); // (winner, loser)
-        } else {
-            odd = v[i];
-        }
-    }
-
-    // 2) Split winners (main chain to be sorted) and derive losers in same winner order
-    std::vector<int> winners;
-    winners.reserve((v.size()+1)/2);
-    
-    for (std::size_t i = 0; i < pairs.size(); ++i) winners.push_back(pairs[i].first);
-
-    sort_vec(winners, comps); // recursively sort winners
-
-    std::vector<int> losers = arrange_losers_vec(pairs, winners, odd);
-
-    // 3) Insertion order for losers
-    std::vector<int> order; order.reserve(losers.size());
-    build_jacobsthal_insertion_order(order, losers.size());
-
-    // Pre-insert first loser if present and more than one to insert (classic optimization)
-    if (order.size() > 1 && !losers.empty()) {
-        winners.insert(winners.begin(), losers[0]);
-        losers[0] = -1; // mark consumed
-    }
-
-    // 4) Insert remaining losers using bounded binary search
-    for (std::size_t k = 0; k < order.size(); ++k) {
-        int idx = order[k];
-        if (idx < 0 || (std::size_t)idx >= losers.size()) continue;
-
-        int val = losers[idx];
-        if (val == -1) continue;
-
-        int win_partner = find_paired_second_vec(pairs, val); // winner paired to this loser
-        int hi = find_index_vec(winners, win_partner) - 1;    // search strictly before partner
-        if (hi < 0) {
-            winners.insert(winners.begin(), val);
-        } else {
-            int pos = lower_bound_count_vec(winners, val, hi, comps);
-            winners.insert(winners.begin() + pos, val);
-        }
-    }
-
-    v.swap(winners);
+void PmergeMe::print_paired_vec(std::vector<std::pair<int, int> > vec) {
+    for (std::size_t i = 0; i < vec.size(); i++)
+        std::cout << "(" << vec[i].first << ", " << vec[i].second << ") ";
+    std::cout << std::endl;
 }
 
-void PmergeMe::sort_deque(std::deque<int>& d, std::size_t& comps) {
-    if (d.size() <= 1) return;
+void PmergeMe::print_vector(const std::vector<int>& vec) {
+    for (std::size_t i = 0; i < vec.size(); ++i) {
+        std::cout << vec[i];
+        if (i + 1 < vec.size()) std::cout << " ";
+    }
+    std::cout << std::endl;
+}
 
-    // 1) Order each adjacent pair and build (winner, loser)
-    pairwise_swap_deq(d, comps);
-    std::deque< std::pair<int,int> > pairs;
+void PmergeMe::print_deque(const std::deque<int>& dq) {
+    for (std::size_t i = 0; i < dq.size(); ++i)
+        std::cout << dq[i] << (i + 1 < dq.size() ? " " : "");
+    std::cout << std::endl;
+}
+
+void PmergeMe::sort_vec(std::vector<int>& vec, int* comparisons) {
+    if (vec.size() <= 1) return;
+
+    std::vector<std::pair<int, int> > main_chain;
+    std::vector<int> winners, losers;
     int odd = -1;
 
-    for (std::size_t i = 0; i < d.size(); i += 2) {
-        if (i + 1 < d.size()) {
-            pairs.push_back(std::make_pair(d[i+1], d[i])); // (winner, loser)
+    for (std::size_t i = 0; i < vec.size(); i += 2) {
+        if (i + 1 < vec.size()) {
+            (*comparisons)++;
+            if (vec[i] > vec[i + 1])
+                std::swap(vec[i], vec[i + 1]);
+            main_chain.push_back(std::make_pair(vec[i + 1], vec[i]));
         } else {
-            odd = d[i];
+            odd = vec[i];
         }
     }
 
-    // 2) Split winners (main chain) and losers aligned to winners
-    std::deque<int> winners;
-    for (std::size_t i = 0; i < pairs.size(); ++i) winners.push_back(pairs[i].first);
+    for (std::size_t i = 0; i < main_chain.size(); ++i) {
+        winners.push_back(main_chain[i].first);
+        losers.push_back(main_chain[i].second);
+    }
+    if (odd != -1)
+        losers.push_back(odd);
 
-    sort_deque(winners, comps); // recursively sort winners
+    sort_vec(winners, comparisons);
 
-    std::deque<int> losers = arrange_losers_deq(pairs, winners, odd);
+    // Rearrange losers to match winners’ paired ordering
+    losers = arrangeLosers(main_chain, losers, winners, odd);
 
-    // 3) Insertion order
-    std::vector<int> order; order.reserve(losers.size());
-    build_jacobsthal_insertion_order(order, losers.size());
+    // Generate and adapt Jacobsthal-based insertion order
+    std::vector<int> insertion_order = JacobthalIndices(static_cast<int>(losers.size()));
+    edit(insertion_order, losers);
 
-    if (order.size() > 1 && !losers.empty()) {
+    // Pre-insert first loser if sequence has more than one element
+    if (insertion_order.size() > 1) {
         winners.insert(winners.begin(), losers[0]);
         losers[0] = -1;
     }
 
-    // 4) Insert remaining losers using bounded binary search
-    for (std::size_t k = 0; k < order.size(); ++k) {
-        int idx = order[k];
-        if (idx < 0 || (std::size_t)idx >= losers.size()) continue;
+    // Insert remaining losers using binary search with upper bound limit
+    for (std::vector<int>::iterator it = insertion_order.begin(); it != insertion_order.end(); ++it) {
+        int index = *it;
+        if (index < 0 || static_cast<std::size_t>(index) >= losers.size())
+            continue;
+        int val = losers[index];
+        if (val == -1)
+            continue;
+        int lim = get_idx(winners, findPairedValue(main_chain, val)) - 1;
+        std::vector<int>::iterator pos = winners.begin() + binary_Search(winners, val, lim, comparisons);
+        winners.insert(pos, val);
+    }
 
-        int val = losers[idx];
-        if (val == -1) continue;
+    vec.swap(winners);
+}
 
-        int win_partner = find_paired_second_deq(pairs, val);
-        int hi = find_index_deq(winners, win_partner) - 1;
-        if (hi < 0) {
-            winners.insert(winners.begin(), val);
+void PmergeMe::sort_deque(std::deque<int>& dq, int* comparisons) {
+    if (dq.size() <= 1) return;
+
+    std::deque<std::pair<int, int> > main_chain;
+    std::deque<int> winners, losers;
+    int odd = -1;
+
+    for (std::size_t i = 0; i < dq.size(); i += 2) {
+        if (i + 1 < dq.size()) {
+            (*comparisons)++;
+            if (dq[i] > dq[i + 1])
+                std::swap(dq[i], dq[i + 1]);
+            main_chain.push_back(std::make_pair(dq[i + 1], dq[i]));
         } else {
-            int pos = lower_bound_count_deq(winners, val, hi, comps);
-            winners.insert(winners.begin() + pos, val);
+            odd = dq[i];
         }
     }
 
-    d.swap(winners);
+    for (std::size_t i = 0; i < main_chain.size(); ++i) {
+        winners.push_back(main_chain[i].first);
+        losers.push_back(main_chain[i].second);
+    }
+    if (odd != -1)
+        losers.push_back(odd);
+
+    sort_deque(winners, comparisons);
+
+    // Rearrange losers to match winners’ paired ordering
+    losers = arrangeLosersDeq(main_chain, losers, winners, odd);
+
+    // Generate and adapt Jacobsthal-based insertion order
+    std::deque<int> insertion_order = JacobthalIndicesDeq(static_cast<int>(losers.size()));
+    editDeq(insertion_order, losers);
+
+    // Pre-insert first loser if sequence has more than one element
+    if (insertion_order.size() > 1) {
+        winners.insert(winners.begin(), losers[0]);
+        losers[0] = -1;
+    }
+
+    // Insert remaining losers using binary search with upper bound limit
+    for (std::deque<int>::iterator it = insertion_order.begin(); it != insertion_order.end(); ++it) {
+        int index = *it;
+        if (index < 0 || static_cast<std::size_t>(index) >= losers.size())
+            continue;
+        int val = losers[index];
+        if (val == -1)
+            continue;
+        int lim = get_idx_deq(winners, findPairedValueDeq(main_chain, val)) - 1;
+        std::deque<int>::iterator pos = winners.begin() + binary_Search_deque(winners, val, lim, comparisons);
+        winners.insert(pos, val);
+    }
+
+    dq.swap(winners);
 }

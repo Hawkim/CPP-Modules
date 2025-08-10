@@ -3,44 +3,24 @@
 
 #include <vector>
 #include <deque>
+#include <utility>
 #include <cstddef>
 
 class PmergeMe {
 public:
     PmergeMe();
+    PmergeMe(const PmergeMe& other);
+    PmergeMe& operator=(const PmergeMe& other);
     ~PmergeMe();
 
-    // Sort + count comparisons (incremented only on key comparisons)
-    void sort_vec (std::vector<int>& v, std::size_t& comps);
-    void sort_deque(std::deque<int>& d,  std::size_t& comps);
+    // Sorting (counts comparisons via the provided pointer)
+    void sort_vec(std::vector<int>& vec, int* comparisons);
+    void sort_deque(std::deque<int>& dq, int* comparisons);
 
-    // Simple printers
-    void print_vector(const std::vector<int>& v) const;
-    void print_deque (const std::deque<int>& d) const;
-
-private:
-    // ---- Internal helpers (vector) ----
-    static void pairwise_swap_vec(std::vector<int>& v, std::size_t& comps);
-    static int  lower_bound_count_vec(const std::vector<int>& a, int key, int hi, std::size_t& comps);
-    static int  find_index_vec(const std::vector<int>& v, int value);
-    static int  find_paired_first_vec(const std::vector< std::pair<int,int> >& pairs, int first);
-    static int  find_paired_second_vec(const std::vector< std::pair<int,int> >& pairs, int second);
-    static std::vector<int> arrange_losers_vec(const std::vector< std::pair<int,int> >& main_pairs,
-                                               const std::vector<int>& winners,
-                                               int odd);
-
-    // ---- Internal helpers (deque) ----
-    static void pairwise_swap_deq(std::deque<int>& d, std::size_t& comps);
-    static int  lower_bound_count_deq(const std::deque<int>& a, int key, int hi, std::size_t& comps);
-    static int  find_index_deq(const std::deque<int>& d, int value);
-    static int  find_paired_first_deq(const std::deque< std::pair<int,int> >& pairs, int first);
-    static int  find_paired_second_deq(const std::deque< std::pair<int,int> >& pairs, int second);
-    static std::deque<int> arrange_losers_deq(const std::deque< std::pair<int,int> >& main_pairs,
-                                              const std::deque<int>& winners,
-                                              int odd);
-
-    // Jacobsthal-guided insertion order (no sets/finds; linear-time build)
-    static void build_jacobsthal_insertion_order(std::vector<int>& order, std::size_t n);
+    // Simple printers (handy for the project’s required output)
+    void print_vector(const std::vector<int>& vec);
+    void print_deque(const std::deque<int>& dq);
+    void print_paired_vec(std::vector<std::pair<int, int> > vec);
 };
 
 #endif // PMERGEME_HPP

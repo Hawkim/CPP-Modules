@@ -8,9 +8,6 @@
 #include <cerrno>
 #include <cstdlib>
 
-#define GREEN_CHECK "\033[1;32m✔\033[0m"
-#define RED_X       "\033[1;31m✘\033[0m"
-
 static int validate_input(int ac, char** av, std::vector<int>& input) {
     std::set<long> seen;
     for (int i = 1; i < ac; i++) {
@@ -30,7 +27,7 @@ static int validate_input(int ac, char** av, std::vector<int>& input) {
     return 1;
 }
 
-static bool isSortedVec(const std::vector<int>& v) {
+static bool isSorted(const std::vector<int>& v) {
     for (std::size_t i = 1; i < v.size(); ++i)
         if (v[i - 1] > v[i]) return false;
     return true;
@@ -58,18 +55,18 @@ int main(int ac, char** av) {
     std::cout << "Before: ";
     fj.print_vector(input);
 
-    std::size_t vec_comparisons = 0;
-    std::size_t deq_comparisons = 0;
+    int vec_comparisons = 0;
+    int deq_comparisons = 0;
 
     std::clock_t start_v = std::clock();
-    fj.sort_vec(input, vec_comparisons);
+    fj.sort_vec(input, &vec_comparisons);
     std::clock_t end_v = std::clock();
 
     std::cout << "After:  ";
     fj.print_vector(input);
 
     std::clock_t start_d = std::clock();
-    fj.sort_deque(input_deque, deq_comparisons);
+    fj.sort_deque(input_deque, &deq_comparisons);
     std::clock_t end_d = std::clock();
 
     double t_vec_us = (double)(end_v - start_v) / CLOCKS_PER_SEC * 1e6;
@@ -77,13 +74,11 @@ int main(int ac, char** av) {
 
     std::cout << "Vector comparisons: " << vec_comparisons << "\n";
     std::cout << "Deque  comparisons: " << deq_comparisons << "\n";
-    std::cout << "Time to process " << input.size()
-              << " elements with std::vector: " << t_vec_us << " us\n";
-    std::cout << "Time to process " << input_deque.size()
-              << " elements with std::deque: " << t_deq_us << " us\n";
+    std::cout << "Time to process " << input.size() << " elements with std::vector: " << t_vec_us << " us\n";
+    std::cout << "Time to process " << input_deque.size() << " elements with std::deque: " << t_deq_us << " us\n";
 
-    std::cout << "Vector sorted? " << (isSortedVec(input) ? GREEN_CHECK : RED_X) << "\n";
-    std::cout << "Deque  sorted? " << (isSortedDeq(input_deque) ? GREEN_CHECK : RED_X) << "\n";
+    std::cout << (isSorted(input) ? "Vector is sorted.\n" : "Vector is NOT sorted.\n");
+    std::cout << (isSortedDeq(input_deque) ? "Deque is sorted.\n" : "Deque is NOT sorted.\n");
 
     return 0;
 }
