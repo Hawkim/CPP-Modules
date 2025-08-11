@@ -14,8 +14,8 @@ public:
     ~PmergeMe();
 
     // Sorting (counts comparisons via the provided pointer)
-    void sort_vec(std::vector<int>& values, int* comparisons);
-    void sort_deque(std::deque<int>& values, int* comparisons);
+    void FordJohnsonSortVec(std::vector<int>& values, int* comparisons);
+    void FordJohnsonSortDeq(std::deque<int>& values, int* comparisons);
 
     // Simple printers (handy for the project’s required output)
     void print_vector(const std::vector<int>& values);

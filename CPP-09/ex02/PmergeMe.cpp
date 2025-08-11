@@ -222,7 +222,7 @@ void PmergeMe::print_deque(const std::deque<int>& values) {
     std::cout << std::endl;
 }
 
-void PmergeMe::sort_vec(std::vector<int>& values, int* comparisons) {
+void PmergeMe::FordJohnsonSortVec(std::vector<int>& values, int* comparisons) {
     if (values.size() <= 1) return;
 
     std::vector<std::pair<int,int> > pairs; // (winner, loser)
@@ -245,7 +245,7 @@ void PmergeMe::sort_vec(std::vector<int>& values, int* comparisons) {
     }
     if (oddValue != -1) losers.push_back(oddValue);
 
-    sort_vec(winners, comparisons);                // recursively sort main chain
+    FordJohnsonSortVec(winners, comparisons);                // recursively sort main chain
     losers = arrangeLosers(pairs, losers, winners, oddValue); // align losers
 
     std::vector<int> insertionOrder = JacobthalIndices((int)losers.size());
@@ -273,7 +273,7 @@ void PmergeMe::sort_vec(std::vector<int>& values, int* comparisons) {
     values.swap(winners);
 }
 
-void PmergeMe::sort_deque(std::deque<int>& values, int* comparisons) {
+void PmergeMe::FordJohnsonSortDeq(std::deque<int>& values, int* comparisons) {
     if (values.size() <= 1) return;
 
     std::deque<std::pair<int,int> > pairs; // (winner, loser)
@@ -296,7 +296,7 @@ void PmergeMe::sort_deque(std::deque<int>& values, int* comparisons) {
     }
     if (oddValue != -1) losers.push_back(oddValue);
 
-    sort_deque(winners, comparisons);
+    FordJohnsonSortDeq(winners, comparisons);
     losers = arrangeLosersDeq(pairs, losers, winners, oddValue);
 
     std::deque<int> insertionOrder = JacobthalIndicesDeq((int)losers.size());
